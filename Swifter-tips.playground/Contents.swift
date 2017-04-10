@@ -356,6 +356,10 @@ print("Is this animal dangerous? ", isDangerous(animal: tiger))
 class ClassA {
     let num: Int
     
+    class var name: String {
+        return "Victor Qi"
+    }
+    
     required init(num: Int) {
         self.num = num
     }
@@ -367,6 +371,10 @@ class ClassA {
 
 class ClassB: ClassA {
     let times: Int
+    
+    override static var name: String {
+        return "Qi JianQiong"
+    }
     
     required init(num: Int) {
         self.times = num + 1
@@ -440,3 +448,236 @@ if let num = Int(fromString: "七八9五") {
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 
 // MARK: static 和 class
+struct MyPoint: CustomStringConvertible {
+    let x: Double
+    let y: Double
+    
+    static let zero = MyPoint(x: 0, y: 0)
+    
+    static let ones: [MyPoint] = [MyPoint(x: -1, y: -1),
+                                  MyPoint(x: -1, y: 1),
+                                  MyPoint(x: 1, y: 1),
+                                  MyPoint(x: 1, y: -1)]
+    
+    static func add(_ lhs: MyPoint, _ rhs: MyPoint) -> MyPoint {
+        return MyPoint(x: lhs.x + rhs.x, y: lhs.y + rhs.y)
+    }
+    
+    var description: String {
+        return "MyPoint(x: \(x), y: \(y))"
+    }
+}
+
+let zero = MyPoint.zero
+let one = MyPoint.ones[1]
+let newOne = MyPoint.add(zero, one)
+print(zero, one, newOne)
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
+// MARK: 多类型和容器
+enum IntOrString {
+    case intValue(Int)
+    case stringValue(String)
+}
+let mixed = [IntOrString.intValue(10),
+             IntOrString.stringValue("Nihao"),
+             IntOrString.stringValue("Sb"),
+             IntOrString.intValue(22)]
+for value in mixed {
+    switch value {
+    case let .intValue(i):
+        print("Int Value \(i)")
+    case let .stringValue(string):
+        print("String Value \(string)")
+    }
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
+// MARK: 正则表达式
+struct RegexHelper {
+    let regex: NSRegularExpression
+    
+    init(_ patten: String) throws{
+        try regex = NSRegularExpression(pattern: patten, options: .caseInsensitive)
+    }
+    
+    func match(_ input: String) -> Bool {
+        let matches = regex.matches(in: input, options: [], range: NSMakeRange(0, input.utf8.count))
+        return matches.count > 0
+    }
+}
+func emailMatch() -> Bool {
+    let matchPatten = "^([a-z0-9_\\.-]+)@([\\da-z\\.-]+)\\.([a-z\\.]{2,6})$"
+    guard let matcher = try? RegexHelper(matchPatten) else {
+        print("regex sb le")
+        return false
+    }
+    let emailAddress = "qijianqiong@gmail.com"
+    if matcher.match(emailAddress) {
+        print("nice email")
+        return true
+    } else {
+        return false
+    }
+}
+emailMatch()
+
+precedencegroup MatchPrecedence {
+    higherThan: DefaultPrecedence
+}
+infix operator =~: MatchPrecedence
+func =~(lhs: String, rhs: String) -> Bool {
+    do {
+        return try RegexHelper(rhs).match(lhs)
+    } catch {
+        return false
+    }
+}
+if "qijianqiong@gmail.com" =~ "^([a-z0-9_\\.-]+)@([\\da-z\\.-]+)\\.([a-z\\.]{2,6})$" {
+    print("nice")
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
+// MARK: 模式匹配
+if -1.0...1.0 ~= 0.5 {
+    print("0.5 is in")
+} else {
+    print("0.5 is out")
+}
+let password = "nihaodashabi"
+if "nihaodashabi" ~= password {
+    print("check in")
+} else {
+    print("check failed")
+}
+let numNil: Int? = nil
+if nil ~= numNil {
+    print("nil")
+}
+
+func ~=(patten: NSRegularExpression, input: String) -> Bool {
+    return patten.numberOfMatches(in: input, options: [], range: NSMakeRange(0, input.utf8.count)) > 0
+}
+
+prefix operator ~/
+prefix func ~/(patten: String) throws -> NSRegularExpression {
+    return try NSRegularExpression(pattern: patten, options: .caseInsensitive)
+}
+
+let contact = ("qijianqiong@gmail.com", "http://victorqi.com")
+func testRegexInSwitch(inputs: (String, String)) {
+    let mail = try? ~/"^([a-z0-9_\\.-]+)@([\\da-z\\.-]+)\\.([a-z\\.]{2,6})$"
+    let site = try? ~/"^(https?:\\/\\/)?([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?$"
+    guard let mailRegex = mail, let siteRegex = site else {
+        print("~/ operator failed")
+        return
+    }
+    switch inputs {
+    case (mailRegex, siteRegex): print("有枪有炮")
+    case (_, siteRegex): print("有炮")
+    case (mailRegex, _): print("有枪")
+    case (_, _): print("啥都么得")
+    }
+}
+testRegexInSwitch(inputs: contact)
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
+// MARK: ..< & ...
+let tests = "qiJianqiong"
+let words = "a" ... "z"
+for c in tests.characters {
+    if !words.contains(String(c)) {
+        print("\(c) 不是小写的")
+    }
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
+// MARK: AnyClass 元类型 .self
+let typeA: ClassA.Type = ClassA.self
+let typeB: AnyClass = ClassB.self
+print("typeA is \(typeA), typeB is \(typeB)")
+print("typeA's name is \(typeA.name)")
+print("typeB's name is \((typeB as! ClassB.Type).name)")
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
+// MARK: 协议中的Self
+protocol Copyable {
+    func copy() -> Self
+}
+
+class MyClass: Copyable {
+    var num = 1
+    
+    required init() {}
+    
+    func copy() -> Self {
+        let result = type(of: self).init()
+        result.num = self.num
+        return result
+    }
+}
+
+let object = MyClass()
+object.num = 5
+
+let newObject = object.copy()
+
+object.num = 15
+
+print("object.num \(object.num) newObject.num \(newObject.num)")
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
+// MARK: 属性观察
+class DateClass {
+    var date: Date {
+        willSet {
+            print("即将从\(date)设定为\(newValue)")
+        }
+        didSet {
+            print("已经从\(oldValue)设定到\(date)")
+        }
+    }
+    
+    var name: String {
+        set {
+            print("set")
+        }
+        
+        get {
+            return "victor qi"
+        }
+    }
+    
+    init() {
+        self.date = Date()
+    }
+}
+
+let foo = DateClass()
+foo.date.addTimeInterval(10086)
+print("now date is", foo.date)
+
+class A {
+    var num: Int {
+        get {
+            print("get")
+            return 1
+        }
+        set { print("set") }
+    }
+}
+class B: A {
+    override var num: Int {
+        willSet { print("willSet") }
+        didSet { print("didSet") } //会打印get，didSet需要获取旧值并存储起来，因此会调用一次get
+    }
+}
+let b = B()
+b.num = 3
