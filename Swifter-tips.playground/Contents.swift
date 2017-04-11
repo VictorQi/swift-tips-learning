@@ -145,8 +145,11 @@ extension Toy {
         
     }
 }
-
+let toy = Toy(name: "haha")
+let pet = Pet()
+pet.toy = toy
 let xiaoming = Child()
+xiaoming.pet = pet
 if let toyName = xiaoming.pet?.toy?.name {
     print("has a toy named \(toyName)")
 }
@@ -681,3 +684,144 @@ class B: A {
 }
 let b = B()
 b.num = 3
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
+// MARK: final
+class Parent {
+    final func method() {
+        print("开始配置")
+        methodImpl()
+        print("结束配置")
+    }
+    
+    func methodImpl() {
+        fatalError("子类必须实现这个方法")
+    }
+}
+
+class NewChild: Parent {
+    override func methodImpl() {
+        print("正在配置")
+    }
+}
+let newChild = NewChild()
+newChild.method()
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
+// MARK: lazy
+let data = 1...3
+//let resultD = data.map { (i: Int) -> Int in
+//    print("正在处理\(i)")
+//    return i * 2
+//}
+let resultD = data.lazy.map { (i) -> Int in
+    print("正在处理\(i)")
+    return i * 2
+}
+print("准备访问结果")
+for i in resultD {
+    print("操作后的结果为\(i)")
+}
+print("访问结束")
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
+// MARK: 反射和Mirror
+let r = Mirror(reflecting: xiaoming)
+print("xiaoming is \(r.displayStyle!)")
+print("xiaoming has \(r.children.count) children")
+for child in r.children {
+    print("property is \(child.label!), value is \(child.value)")
+}
+dump(xiaoming)
+
+func valueFrom(_ object: Any, key: String) -> Any? {
+    let reflection = Mirror(reflecting: object)
+    
+    for child in reflection.children {
+        let (targetKey, targetMirror) = (child.label, child.value)
+        if targetKey == key {
+            return targetMirror
+        }
+    }
+    return nil
+}
+
+if let name = valueFrom(xiaoming, key: "pet") as? Pet {
+    print("通过key得到值: \(name)")
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
+// MARK: 多重Optional
+var aNil: String? = nil
+var anotherNil: String?? = aNil //两者不同，anthoerNil这个多重Optional是一层Enum容器中.Some条件包含值aNil，而aNil是一层Enum容器中的.None
+var literalNil: String?? = nil  //literalNil则是一层Enum容器中的.None
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
+// MARK: 协议扩展
+protocol A2 {
+    func method() -> String
+}
+
+extension A2 {
+    func method() -> String {
+        return "Hello."
+    }
+    
+    func method1() -> String {
+        return "Hi!"
+    }
+}
+
+struct B1: A2 {
+    func method() -> String {
+        return "Hello! Victor."
+    }
+    
+    func method1() -> String {
+        return "Nice! Well done."
+    }
+}
+
+let b1 = B1()
+print(b1.method())
+print(b1.method1())
+
+let b2: A2 = B1()
+print(b2.method())
+print(b2.method1())
+print("\n ----------------------------------------- \n")
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
+// MARK: indirecth和嵌套Enum
+indirect enum LinkedList<Element: Comparable> {
+    case empty
+    case node(Element, LinkedList<Element>)
+    
+    func remove(_ element: Element) -> LinkedList<Element> {
+        guard case let .node(value, next) = self else {
+            print("empty")
+            print("\n ----------------------------------------- \n")
+            return .empty
+        }
+        print("value is \(value)")
+        if value == element {
+            print("next is \(next)")
+            print("\n ----------------------------------------- \n")
+            return next
+        } else {
+            let newNext = next.remove(element)
+            print("next.remove(element) is \(newNext)")
+            print("\n ----------------------------------------- \n")
+            return LinkedList.node(value, newNext)
+        }
+    }
+}
+let linklist = LinkedList.node(1, .node(2, .node(3, .node(4, .empty))))
+//print(linklist)
+let linklist1 = linklist.remove(4)
+//print(linklist1)
